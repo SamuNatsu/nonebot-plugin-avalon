@@ -1,0 +1,37 @@
+[project]
+name = "nonebot-plugin-avalon"
+version = "0.1.0"
+description = "Avalon game plugin for nonebot2"
+authors = [
+    {name = "SNRainiar", email = "rainiar@foxmail.com"},
+]
+dependencies = [
+    "nonebot-plugin-alconna>=0.51.1",
+    "nonebot-plugin-session>=0.3.2",
+    "nonebot-plugin-apscheduler>=0.5.0",
+]
+requires-python = ">=3.10"
+readme = "README.md"
+license = {text = "AGPL-3.0-or-later"}
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: GNU Affero General Public License v3 or later (AGPLv3+)",
+    "Operating System :: OS Independent",
+]
+
+[project.urls]
+Homepage = "https://github.com/SamuNatsu/nonebot-plugin-avalon"
+Issues = "https://github.com/SamuNatsu/nonebot-plugin-avalon/issues"
+
+[build-system]
+requires = ["pdm-backend"]
+build-backend = "pdm.backend"
+
+[tool.pdm]
+distribution = true
+
+[tool.pdm.dev-dependencies]
+dev = [
+    "nonebot-adapter-console>=0.6.0",
+    "nonebot2[fastapi]>=2.3.2",
+]
