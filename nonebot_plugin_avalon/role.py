@@ -21,7 +21,7 @@ ROLE_NAME: dict[RoleEnum, str] = {
   RoleEnum.MORGANA:  "🔴莫甘娜",
   RoleEnum.ASSASSIN: "🔴刺客",
   RoleEnum.OBERON:   "🔴奥伯伦",
-  RoleEnum.LACHEY:   "🔴莫德雷德的爪牙"
+  RoleEnum.LACHEY:   "🔴莫德雷德的爪牙",
 }
 
 ROLE_HELP: dict[RoleEnum, str] = {
@@ -46,21 +46,30 @@ ROLE_SET: dict[int, list[RoleEnum]] = {
   ],
   7: [
     RoleEnum.MERLIN, RoleEnum.PERCIVAL, RoleEnum.SERVANT, RoleEnum.SERVANT,
-    RoleEnum.MORGANA, RoleEnum.ASSASSIN, RoleEnum.OBERON
+    RoleEnum.MORGANA, RoleEnum.ASSASSIN, RoleEnum.OBERON,
   ],
   8: [
     RoleEnum.MERLIN, RoleEnum.PERCIVAL,
     RoleEnum.SERVANT, RoleEnum.SERVANT, RoleEnum.SERVANT,
-    RoleEnum.MORGANA, RoleEnum.ASSASSIN, RoleEnum.LACHEY
+    RoleEnum.MORGANA, RoleEnum.ASSASSIN, RoleEnum.LACHEY,
   ],
   9: [
     RoleEnum.MERLIN, RoleEnum.PERCIVAL,
     RoleEnum.SERVANT, RoleEnum.SERVANT, RoleEnum.SERVANT, RoleEnum.SERVANT,
-    RoleEnum.MORGANA, RoleEnum.ASSASSIN, RoleEnum.MORDRED
+    RoleEnum.MORGANA, RoleEnum.ASSASSIN, RoleEnum.MORDRED,
   ],
   10: [
     RoleEnum.MERLIN, RoleEnum.PERCIVAL,
     RoleEnum.SERVANT, RoleEnum.SERVANT, RoleEnum.SERVANT, RoleEnum.SERVANT,
-    RoleEnum.MORGANA, RoleEnum.ASSASSIN, RoleEnum.MORDRED, RoleEnum.OBERON
+    RoleEnum.MORGANA, RoleEnum.ASSASSIN, RoleEnum.MORDRED, RoleEnum.OBERON,
   ],
+}
+
+ROLE_SET_NAME: dict[int, str] = {
+  5: "梅林、派西维尔、亚瑟的忠臣\n⚔️\n莫甘娜、刺客",
+  6: "梅林、派西维尔、亚瑟的忠臣x2\n⚔️\n莫甘娜、刺客",
+  7: "梅林、派西维尔、亚瑟的忠臣x2\n⚔️\n莫甘娜、刺客、奥伯伦",
+  8: "梅林、派西维尔、亚瑟的忠臣x3\n⚔️\n莫甘娜、刺客、莫德雷德的爪牙",
+  9: "梅林、派西维尔、亚瑟的忠臣x4\n⚔️\n莫甘娜、刺客、莫德雷德",
+  10: "梅林、派西维尔、亚瑟的忠臣x4\n⚔️\n莫甘娜、刺客、莫德雷德、奥伯伦",
 }

@@ -1,4 +1,3 @@
-import asyncio
 import inspect
 
 from typing import Any
@@ -32,7 +31,9 @@ class StateMachine:
   def __init__(self) -> None:
     self.current_state = None
 
-  # Execute action
+  def _is_halted(self) -> bool:
+    return self.current_state != None and self.current_state.final
+
   async def _exec_action(self, name: str, **kwargs) -> None:
     if not hasattr(self, name):
       raise NotImplementedError(name)
@@ -46,26 +47,34 @@ class StateMachine:
     else:
       method(**kwargs)
 
-  # Transition to new state
+  def is_state(self, *args) -> bool:
+    return (
+      self.current_state.id in args if self.current_state != None else False
+    )
+
   async def to_state(self, next_state: State, **kwargs) -> None:
-    if self.current_state != None and self.current_state.final:
+    if self._is_halted():
       return
 
     if self.current_state != None and self.current_state.exit != None:
-      await self._exec_action(self.current_state.exit, next_state=next_state.id)
+      await self._exec_action(
+        self.current_state.exit,
+        next_state=next_state.id
+      )
 
     if next_state.enter != None:
       await self._exec_action(
         next_state.enter,
-        last_state=self.current_state.id if self.current_state != None else None,
+        last_state=(
+          self.current_state.id if self.current_state != None else None
+        ),
         **kwargs
       )
 
     self.current_state = next_state
 
-  # On message
   async def on_msg(self, **kwargs) -> None:
-    if self.current_state != None and self.current_state.final:
+    if self._is_halted():
       return
 
     if self.current_state != None and self.current_state.msg != None:

@@ -24,6 +24,9 @@ async def handle_join(session: EventSession) -> None:
     return
   g: Game = Game.instances[session.id2]
 
+  if not g.is_state(Game.s_wait_start):
+    return
+
   await g.on_msg(type="join", user_id=session.id1)
 
 @leave.handle()
@@ -31,6 +34,9 @@ async def handle_leave(session: EventSession) -> None:
   if session.id2 not in Game.instances:
     return
   g: Game = Game.instances[session.id2]
+
+  if not g.is_state(Game.s_wait_start):
+    return
 
   await g.on_msg(type="leave", user_id=session.id1)
 
@@ -43,12 +49,15 @@ async def handle_players(session: EventSession) -> None:
   await g.print_players()
 
 @kick.handle()
-async def handle_kick(session: EventSession, result: Arparma = AlconnaMatches()) -> None:
+async def handle_kick(
+  session: EventSession,
+  result: Arparma = AlconnaMatches()
+) -> None:
   if session.id2 not in Game.instances:
     return
   g: Game = Game.instances[session.id2]
 
-  if session.id1 != g.host_id:
+  if session.id1 != g.host_id or not g.is_state(Game.s_wait_start):
     return
 
   await g.on_msg(type="kick", user_id=result.args["target"].target)
@@ -59,7 +68,7 @@ async def handle_start(session: EventSession) -> None:
     return
   g: Game = Game.instances[session.id2]
 
-  if session.id1 != g.host_id:
+  if session.id1 != g.host_id or not g.is_state(Game.s_wait_start):
     return
 
   await g.on_msg(type="start", user_id=session.id1)
