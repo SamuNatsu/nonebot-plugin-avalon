@@ -1,2 +1,2 @@
-from . import game
-from . import helper
+from .game import *
+from .helper import *

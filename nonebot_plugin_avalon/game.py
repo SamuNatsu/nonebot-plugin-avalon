@@ -2,6 +2,7 @@ import copy
 import random
 
 from .role import ROLE_NAME, ROLE_SET, ROLE_SET_NAME, RoleEnum
+from .round import ROUND_PROTECT, ROUND_SET
 from .state_machine import State, StateMachine
 
 from datetime import UTC, datetime, timedelta
@@ -62,7 +63,11 @@ class Game(StateMachine):
     msg="m_wait_start"
   )
   s_initialize: State   = State(id=StateEnum.INITIALIZE, enter="e_initialize")
-  s_team_build: State   = State(id=StateEnum.TEAM_BUILD)
+  s_team_build: State   = State(
+    id=StateEnum.TEAM_BUILD,
+    enter="e_team_build",
+    msg="m_team_build"
+  )
   s_team_vote: State    = State(id=StateEnum.TEAM_VOTE)
   s_team_set_out: State = State(id=StateEnum.TEAM_SET_OUT)
   s_team_reject: State  = State(id=StateEnum.TEAM_REJECT)
@@ -83,6 +88,10 @@ class Game(StateMachine):
   players: dict[str, Player]
   players_order: list[str]
   leader: str
+  team: set[str]
+  round: int
+  round_state: list[bool | None]
+  build_tries: int
 
   # Constructor
   def __init__(self, session: EventSession, host_info: UserInfo) -> None:
@@ -94,6 +103,10 @@ class Game(StateMachine):
     self.players = { host_info.user_id: Player(host_info) }
     self.players_order = []
     self.leader = ""
+    self.team = set()
+    self.round = 0
+    self.round_state = [None, None, None, None, None]
+    self.build_tries = 1
 
     scheduler.add_job(
       self.to_state,
@@ -108,7 +121,7 @@ class Game(StateMachine):
   async def e_wait_start(self, last_state: str | None) -> None:
     await (
       UniMessage
-        .text("📣本群组阿瓦隆房间已由房主 [").at(self.host_id).text("] 开启\n")
+        .text(f"📣本群组阿瓦隆房间已由房主 [{self.players[self.host_id].name}] 开启\n")
         .text("⚠️为了保证游戏的正常工作，请玩家添加本机器人为好友\n")
         .text("""[.awl加入] 加入房间
 [.awl退出] 退出房间
@@ -191,15 +204,25 @@ class Game(StateMachine):
                 ]
               )
             )
+            .send(Target(pl.id, private=True, self_id=self.bot_id))
         )
 
-    # TODO
+    await self.to_state(Game.s_team_build)
+  
+  async def e_team_build(self, last_state: str | None) -> None:
+    await self.print_game_state()
+
     await (
       UniMessage
-        .text("📣TBC...")
+        .text(f"📣第{self.round + 1}轮任务开始，请队长进行队伍构建\n")
+        .text(f"👑当前队长：{self.players[self.leader].name}\n")
+        .text(f"⚠️本轮任务需要{ROLE_SET[len(self.players)][self.round]}人参与")
+        .text("""[.awl组队 <@某人 @某人 ...>] 携带某些玩家组建队伍（仅队长）
+[.awl状态] 查看当前游戏状态
+[.awl玩家] 查看房间玩家列表
+[.awl结束] 强制结束游戏（仅房主）""")
         .send(Target(self.guild_id, self_id=self.bot_id))
-    )
-    await self.to_state(Game.s_force_end, reason="感谢参与测试")
+      )
 
   async def e_force_end(self, last_state: str | None, reason: str) -> None:
     if scheduler.get_job(self.guild_id) != None:
@@ -223,6 +246,7 @@ class Game(StateMachine):
         UniMessage
           .text(f"📣玩家 [{pl.name}] 加入了房间\n")
           .text(f"💡房间人数：{len(self.players)}")
+          .text("⚠️为了保证游戏的正常工作，请添加本机器人为好友\n")
           .send()
       )
 
@@ -255,6 +279,22 @@ class Game(StateMachine):
       else:
         await self.to_state(Game.s_initialize)
 
+  async def m_team_build(self, users: list[str]) -> None:
+    self.team = set(users)
+
+    if len(self.team) != ROUND_SET[len(self.players)][self.round]:
+      await (
+        UniMessage
+          .text("⚠️队伍人数不满足要求\n")
+          .text(f"本轮需要{ROUND_SET[len(self.players)][self.round]}人")
+          .text(f"队长选择了{len(users)}人")
+          .send()
+      )
+      return
+
+    # TODO
+    await self.to_state(Game.s_force_end, reason="测试结束")
+
   # Exit events
 
   # Utils
@@ -272,3 +312,25 @@ class Game(StateMachine):
     msg.text(f"\n\n👑当前队长：{self.players[self.leader].name}")
 
     await msg.send(Target(self.guild_id, self_id=self.bot_id))
+  
+  async def print_game_state(self) -> None:
+    msg: UniMessage = (
+      UniMessage
+        .text("🚀当前游戏状态：\n")
+        .text(f"轮次：{self.round + 1}")
+        .text(
+          f"任务情况：{
+            "".join(
+              [
+                "⬜" if i == None else "🟩" if i else "🟥"
+                for i in self.round_state
+              ]
+            )
+          }"
+        )
+        .text(f"队伍组建尝试次数：{self.build_tries}/5")
+        .text(f"总任务要求人数：{"/".join(ROUND_SET[len(self.players)])}")
+        .text(f"保护轮：{ROUND_PROTECT[len(self.players)] or "无"}")
+        .text(f"玩家人数：{len(self.players)}")
+        .text(f"角色组成：{ROLE_SET_NAME[len(self.players)]}")
+    )

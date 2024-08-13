@@ -4,7 +4,9 @@ from arclet.alconna import Alconna, Args, Arparma
 from nonebot import require
 
 require("nonebot_plugin_alconna")
-from nonebot_plugin_alconna import AlconnaMatcher, AlconnaMatches, At, on_alconna
+from nonebot_plugin_alconna import (
+  AlconnaMatcher, AlconnaMatches, At, MultiVar, on_alconna
+)
 
 require("nonebot_plugin_session")
 from nonebot_plugin_session import EventSession
@@ -98,3 +100,34 @@ async def handle_exit(session: EventSession) -> None:
     return
 
   await g.to_state(Game.s_force_end, reason="房主强制结束")
+
+# Team build
+build: AlconnaMatcher = on_alconna(
+  Alconna(".awl组队", Args["targets", MultiVar(At)])
+)
+status: AlconnaMatcher = on_alconna(".awl状态")
+
+@build.handle()
+async def handle_build(
+  session: EventSession,
+  result: Arparma = AlconnaMatches()
+) -> None:
+  if session.id2 not in Game.instances:
+    return
+  g: Game = Game.instances[session.id2]
+
+  if session.id1 != g.leader or not g.is_state(Game.s_team_build):
+    return
+
+  await g.on_msg(users=[i.target for i in result.args["targets"]])
+
+@status.handle()
+async def handle_status(session: EventSession) -> None:
+  if session.id2 not in Game.instances:
+    return
+  g: Game = Game.instances[session.id2]
+
+  if not g.is_state(Game.s_team_build, Game.s_team_vote, Game.s_assassinate):
+    return
+
+  await g.print_game_state()

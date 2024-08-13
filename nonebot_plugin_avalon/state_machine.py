@@ -48,9 +48,7 @@ class StateMachine:
       method(**kwargs)
 
   def is_state(self, *args) -> bool:
-    return (
-      self.current_state.id in args if self.current_state != None else False
-    )
+    return self.current_state in args
 
   async def to_state(self, next_state: State, **kwargs) -> None:
     if self._is_halted():

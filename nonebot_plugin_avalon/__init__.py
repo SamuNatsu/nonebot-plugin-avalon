@@ -1,4 +1,4 @@
-from . import matchers
+from .matchers import *
 
 from nonebot.plugin import PluginMetadata, inherit_supported_adapters
 
