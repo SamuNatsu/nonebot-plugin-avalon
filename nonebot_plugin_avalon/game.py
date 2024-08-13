@@ -15,7 +15,27 @@ from nonebot_plugin_alconna import Target, UniMessage
 require("nonebot_plugin_apscheduler")
 from nonebot_plugin_apscheduler import scheduler
 
+require("nonebot_plugin_session")
+from nonebot_plugin_session import EventSession
 
+require("nonebot_plugin_userinfo")
+from nonebot_plugin_userinfo import UserInfo
+
+
+# Player class
+class Player:
+  id: str
+  name: str
+  role: RoleEnum | None
+
+  def __init__(self, user_info: UserInfo) -> None:
+    self.id = user_info.user_id
+    self.name = (
+      user_info.user_remark or user_info.user_displayname or user_info.user_name
+    )
+    self.role = None
+
+# Game state enum
 @unique
 class StateEnum(Enum):
   WAIT_START   = auto()
@@ -30,6 +50,7 @@ class StateEnum(Enum):
   RED_WIN      = auto()
   FORCE_END    = auto()
 
+# Game state machine
 class Game(StateMachine):
   # Instances
   instances: dict[str, Self] = {}
@@ -57,32 +78,30 @@ class Game(StateMachine):
 
   # Members
   bot_id: str
-  host_id: str
   guild_id: str
-  players: set[str]
-  player_order: list[str]
-  player_role: dict[str, RoleEnum]
+  host_id: str
+  players: dict[str, Player]
+  players_order: list[str]
   leader: str
 
   # Constructor
-  def __init__(self, bot_id: str, host_id: str, guild_id: str) -> None:
+  def __init__(self, session: EventSession, host_info: UserInfo) -> None:
     super().__init__()
 
-    self.bot_id = bot_id
-    self.host_id = host_id
-    self.guild_id = guild_id
-    self.players = { host_id }
-    self.player_order = []
-    self.player_role = {}
+    self.bot_id = session.bot_id
+    self.guild_id = session.id2
+    self.host_id = host_info.user_id
+    self.players = { host_info.user_id: Player(host_info) }
+    self.players_order = []
     self.leader = ""
 
-    async def timeout() -> None:
-      await self.to_state(Game.s_force_end, reason="游戏超时")
     scheduler.add_job(
-      timeout,
-      "date",
-      run_date=datetime.now(UTC) + timedelta(hours=2),
-      id=self.guild_id
+      self.to_state,
+      args=[Game.s_force_end],
+      kwargs={ "reason": "游戏超时" },
+      id=self.guild_id,
+      trigger="date",
+      run_date=datetime.now(UTC) + timedelta(hours=2)
     )
 
   # Enter events
@@ -115,38 +134,72 @@ class Game(StateMachine):
     percival_info: list[str] = []
     evil_info: dict[str, RoleEnum] = {}
 
-    for pl in self.players:
-      self.player_order.append(pl)
+    for pl in self.players.values():
+      self.players_order.append(pl.id)
 
       role: RoleEnum = roles.pop()
-      self.player_role[pl] = role
-      if role in { RoleEnum.MORGANA, RoleEnum.ASSASSIN, RoleEnum.OBERON, RoleEnum.LACHEY }:
-        merlin_info.append(pl)
-      if role in { RoleEnum.MERLIN, RoleEnum.MORGANA }:
-        percival_info.append(pl)
-      if role in { RoleEnum.MORDRED, RoleEnum.MORGANA, RoleEnum.ASSASSIN, RoleEnum.LACHEY }:
-        evil_info[pl] = role
+      pl.role = role
 
-    random.shuffle(self.player_order)
+      if role in { RoleEnum.MORGANA, RoleEnum.ASSASSIN, RoleEnum.OBERON, RoleEnum.LACHEY }:
+        merlin_info.append(pl.id)
+      if role in { RoleEnum.MERLIN, RoleEnum.MORGANA }:
+        percival_info.append(pl.id)
+      if role in { RoleEnum.MORDRED, RoleEnum.MORGANA, RoleEnum.ASSASSIN, RoleEnum.LACHEY }:
+        evil_info[pl.id] = role
+
+    random.shuffle(self.players_order)
     random.shuffle(merlin_info)
     random.shuffle(percival_info)
-    self.leader = self.player_order[0]
+    self.leader = self.players_order[0]
 
     await self.print_player_order()
 
-    for pl, role in self.player_role.items():
+    for pl in self.players.values():
       await (
         UniMessage
-          .text(f"💡你的身份是：{ROLE_NAME[role]}")
-          .send(Target(pl, private=True, self_id=self.bot_id))
+          .text(f"💡你的身份是：{ROLE_NAME[pl.role]}")
+          .send(Target(pl.id, private=True, self_id=self.bot_id))
       )
 
-      if role == RoleEnum.MERLIN:
-        pass
-      elif role == RoleEnum.PERCIVAL:
-        pass
-      elif role in { RoleEnum.MORDRED, RoleEnum.MORGANA, RoleEnum.ASSASSIN, RoleEnum.LACHEY }:
-        pass
+      if pl.role == RoleEnum.MERLIN:
+        await (
+          UniMessage
+            .text("📃邪恶方名单：\n")
+            .text(
+              "\n".join([f"{self.players[i].name}({i})" for i in merlin_info])
+            )
+            .send(Target(pl.id, private=True, self_id=self.bot_id))
+        )
+      elif pl.role == RoleEnum.PERCIVAL:
+        await (
+          UniMessage
+            .text("📃TA们可能是梅林：\n")
+            .text(
+              "\n".join([f"{self.players[i].name}({i})" for i in percival_info])
+            )
+            .send(Target(pl.id, private=True, self_id=self.bot_id))
+        )
+      elif pl.role in { RoleEnum.MORDRED, RoleEnum.MORGANA, RoleEnum.ASSASSIN, RoleEnum.LACHEY }:
+        await (
+          UniMessage
+            .text("📃TA们是你的队友：\n")
+            .text(
+              "\n".join(
+                [
+                  f"{self.players[i].name}{ROLE_NAME[j]}({i})"
+                  for i, j in evil_info.items()
+                ]
+              )
+            )
+        )
+
+    # TODO
+    await (
+      UniMessage
+        .text("📣TBC...")
+        .send(Target(self.guild_id, self_id=self.bot_id))
+    )
+    await self.to_state(Game.s_force_end, reason="感谢参与测试")
 
   async def e_force_end(self, last_state: str | None, reason: str) -> None:
     if scheduler.get_job(self.guild_id) != None:
@@ -161,30 +214,32 @@ class Game(StateMachine):
     )
 
   # Message events
-  async def m_wait_start(self, type: str, user_id: str) -> None:
-    if type == "join" and user_id not in self.players:
-      self.players.add(user_id)
+  async def m_wait_start(self, type: str, user_info: UserInfo) -> None:
+    pl: Player = Player(user_info)
+
+    if type == "join" and pl.id not in self.players:
+      self.players[pl.id] = pl
       await (
         UniMessage
-          .text("📣玩家 [").at(user_id).text("] 加入了房间\n")
+          .text(f"📣玩家 [{pl.name}] 加入了房间\n")
           .text(f"💡房间人数：{len(self.players)}")
           .send()
       )
 
-    elif type == "leave" and user_id in self.players:
-      self.players.remove(user_id)
+    elif type == "leave" and pl.id in self.players:
+      self.players.pop(pl.id)
       await (
         UniMessage
-          .text("📣玩家 [").at(user_id).text("] 离开了房间\n")
+          .text(f"📣玩家 [{pl.name}] 离开了房间\n")
           .text(f"💡房间人数：{len(self.players)}")
           .send()
       )
 
-    elif type == "kick" and user_id in self.players:
-      self.players.remove(user_id)
+    elif type == "kick" and pl.id in self.players:
+      self.players.pop(pl.id)
       await (
         UniMessage
-          .text("📣玩家 [").at(user_id).text("] 被踢出房间\n")
+          .text("📣玩家 [").at(pl.id).text("] 被踢出房间\n")
           .text(f"💡房间人数：{len(self.players)}")
           .send()
       )
@@ -204,16 +259,16 @@ class Game(StateMachine):
 
   # Utils
   async def print_players(self) -> None:
-    msg: UniMessage = UniMessage.text(f"【阿瓦隆玩家列表：{len(self.players)}人】")
-    for pl in self.players:
-      msg.text("\n").at(pl)
+    msg: UniMessage = UniMessage.text(f"🎮当前玩家列表：{len(self.players)}人")
+    for pl in self.players.values():
+      msg.text(f"\n{pl.name}")
 
     await msg.send(Target(self.guild_id, self_id=self.bot_id))
 
   async def print_player_order(self) -> None:
     msg: UniMessage = UniMessage.text("▶️当前玩家顺位：")
-    for pl in self.player_order:
-      msg.text("\n").at(pl)
-    msg.text("\n\n👑当前队长：").at(self.leader)
+    for plid in self.players_order:
+      msg.text(f"\n{self.players[plid].name}")
+    msg.text(f"\n\n👑当前队长：{self.players[self.leader].name}")
 
     await msg.send(Target(self.guild_id, self_id=self.bot_id))
