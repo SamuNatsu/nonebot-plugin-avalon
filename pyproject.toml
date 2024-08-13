@@ -1,6 +1,6 @@
 [project]
 name = "nonebot-plugin-avalon"
-version = "0.1.0"
+version = "0.1.1"
 description = "Avalon game plugin for nonebot2"
 authors = [
     {name = "SNRainiar", email = "rainiar@foxmail.com"},
