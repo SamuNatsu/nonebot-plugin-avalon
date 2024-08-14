@@ -1,2 +1,1 @@
-from .game import *
-from .helper import *
+from . import helper as _

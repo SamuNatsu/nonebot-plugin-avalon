@@ -1,9 +1,9 @@
 import copy
 import random
 
-from .role import ROLE_NAME, ROLE_SET, ROLE_SET_NAME, RoleEnum
-from .round import ROUND_PROTECT, ROUND_SET
-from .state_machine import State, StateMachine
+from .game.role import ROLE_NAME, ROLE_SET, ROLE_SET_NAME, RoleEnum
+from .game.round import ROUND_PROTECT, ROUND_SET
+from ._state_machine import State, StateMachine
 
 from datetime import UTC, datetime, timedelta
 from enum import Enum, auto, unique

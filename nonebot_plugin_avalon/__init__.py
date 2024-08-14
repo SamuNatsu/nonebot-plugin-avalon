@@ -1,4 +1,4 @@
-from .matchers import *
+from . import matchers as _
 
 from nonebot.plugin import PluginMetadata, inherit_supported_adapters
 
@@ -11,6 +11,9 @@ __plugin_meta__: PluginMetadata = PluginMetadata(
   type="application",
   homepage="https://github.com/SamuNatsu/nonebot-plugin-avalon",
   supported_adapters=inherit_supported_adapters(
-    "nonebot_plugin_alconna", "nonebot_plugin_session"
+    "nonebot_plugin_alconna",
+    "nonebot_plugin_apscheduler",
+    "nonebot_plugin_session",
+    "nonebot_plugin_userinfo"
   ),
 )

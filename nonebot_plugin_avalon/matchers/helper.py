@@ -1,5 +1,5 @@
 from ..game import Game
-from ..role import ROLE_NAME, ROLE_HELP, RoleEnum
+from ..game.role import ROLE_NAME, ROLE_HELP, RoleEnum
 
 from importlib import metadata
 from nonebot import require
@@ -8,7 +8,7 @@ require("nonebot_plugin_alconna")
 from nonebot_plugin_alconna import AlconnaMatcher, UniMessage, on_alconna
 
 require("nonebot_plugin_session")
-from nonebot_plugin_session import EventSession
+from nonebot_plugin_session import EventSession,SessionLevel
 
 require("nonebot_plugin_userinfo")
 from nonebot_plugin_userinfo import EventUserInfo, UserInfo
@@ -61,6 +61,9 @@ async def handle_new_game(
   session: EventSession,
   user_info: UserInfo = EventUserInfo()
 ) -> None:
+  if session.level != SessionLevel.GROUP:
+    return
+
   if session.id2 in Game.instances:
     await UniMessage.text(
       "本群组有阿瓦隆游戏正在进行，请：\n1.等待游戏结束或\n2.让房主 ["
@@ -71,4 +74,4 @@ async def handle_new_game(
   g: Game = Game(session, user_info)
   Game.instances[session.id2] = g
 
-  await g.to_state(Game.s_wait_start)
+  await g.startup()
