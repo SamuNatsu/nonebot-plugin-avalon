@@ -48,6 +48,7 @@ class Game(StateMachine):
   players_order: list[str]
   round: int
   round_states: list[bool | None]
+  team: set[str]
 
   # Instance methods
   def __init__(self, session: EventSession, user_info: UserInfo) -> None:
@@ -62,6 +63,7 @@ class Game(StateMachine):
     self.players_order = []
     self.round = 0
     self.round_states = [None, None, None, None, None]
+    self.team = set()
 
     async def handle_players(session: EventSession) -> None:
       if (
@@ -129,7 +131,7 @@ class Game(StateMachine):
           }"
         )
         .text(f"队伍组建尝试次数：{self.build_tries}/5")
-        .text(f"总任务要求人数：{"/".join(ROUND_SET[len(self.players)])}")
+        .text(f"总任务要求人数：{"/".join(map(str, ROUND_SET[len(self.players)]))}")
         .text(f"保护轮：{ROUND_PROTECT[len(self.players)] or "无"}")
         .text(f"玩家人数：{len(self.players)}")
         .text(f"角色组成：{ROLE_SET_NAME[len(self.players)]}")

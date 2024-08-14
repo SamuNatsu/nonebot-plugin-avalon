@@ -9,7 +9,7 @@ from nonebot_plugin_alconna import UniMessage
 
 
 # On enter
-async def enter(self: Game, reason: str) -> None:
+async def enter(self: Game, _: StateEnum, reason: str) -> None:
   await (
     UniMessage
       .text("❌游戏强制结束\n")

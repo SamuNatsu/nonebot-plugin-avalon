@@ -30,10 +30,10 @@ class StateMachine:
 
   # Instance methods
   def __init__(self) -> None:
-    if StateMachine._initial_state == None:
+    if self._initial_state == None:
       raise ValueError("a state machine MUST has an initial state")
 
-    self._current_state = StateMachine._initial_state
+    self._current_state = self._initial_state
 
   async def startup(self, **kwargs) -> None:
     current_state: State = self.get_current_state()
@@ -46,7 +46,7 @@ class StateMachine:
         await self.exception_handler(e)
 
   def get_current_state(self) -> State:
-    return StateMachine._states[self._current_state]
+    return self._states[self._current_state]
 
   def is_state(self, *args) -> bool:
     return self._current_state in args

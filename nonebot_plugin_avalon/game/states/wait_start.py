@@ -78,11 +78,13 @@ async def enter(self: Game, _: StateEnum) -> None:
       await self.on_msg(type="start", user_info=user_info)
 
   self.matchers["join"] = on_alconna(
-    Alconna(".awl加入", Args["guild", str]), handlers=[handle_join]
+    Alconna(".awl加入", Args["guild", str]),
+    handlers=[handle_join]
   )
   self.matchers["leave"] = on_alconna(".awl退出", handlers=[handle_leave])
   self.matchers["kick"] = on_alconna(
-    Alconna(".awl踢人", Args["target", At]), handlers=[handle_kick]
+    Alconna(".awl踢人", Args["target", At]),
+    handlers=[handle_kick]
   )
   self.matchers["start"] = on_alconna(".awl开始", handlers=[handle_start])
 
