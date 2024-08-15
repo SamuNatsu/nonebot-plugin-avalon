@@ -1,9 +1,12 @@
+import secrets
+
 from .role import ROLE_SET_NAME, RoleEnum
 from .round import ROUND_PROTECT, ROUND_SET
 from .state_machine import StateMachine
 from .states import StateEnum
 
 from dataclasses import dataclass
+from datetime import UTC, datetime
 from nonebot import require
 from typing import Self
 
@@ -40,7 +43,9 @@ class Game(StateMachine):
 
   # Instance variables
   build_tries: int
+  create_time: datetime
   host_id: str
+  key: str
   leader: str
   guild_target: Target
   matchers: dict[str, AlconnaMatcher]
@@ -49,13 +54,16 @@ class Game(StateMachine):
   round: int
   round_states: list[bool | None]
   team: set[str]
+  vote: dict[str, bool]
 
   # Instance methods
   def __init__(self, session: EventSession, user_info: UserInfo) -> None:
     super().__init__()
 
     self.build_tries = 1
+    self.create_time = datetime.now(UTC)
     self.host_id = session.id1
+    self.key = secrets.token_hex(4)
     self.leader = ""
     self.guild_target = Target(session.id2, self_id=session.bot_id)
     self.matchers = {}
@@ -64,6 +72,7 @@ class Game(StateMachine):
     self.round = 0
     self.round_states = [None, None, None, None, None]
     self.team = set()
+    self.vote = {}
 
     async def handle_players(session: EventSession) -> None:
       if (
@@ -106,20 +115,20 @@ class Game(StateMachine):
     await msg.send(self.guild_target)
 
   async def print_player_order(self) -> None:
-    msg: UniMessage = UniMessage.text("▶️当前玩家顺位：")
+    msg: UniMessage = (
+      UniMessage
+        .text(f"👑当前队长：{self.players[self.leader].name}\n")
+        .text("▶️当前玩家顺位：")
+    )
     for plid in self.players_order:
       msg.text(f"\n{self.players[plid].name}")
-    await (
-      msg
-        .text(f"\n\n👑当前队长：{self.players[self.leader].name}")
-        .send(self.guild_target)
-    )
+    await msg.send(self.guild_target)
 
   async def print_status(self) -> None:
     await (
       UniMessage
         .text("🚀当前游戏状态：\n")
-        .text(f"轮次：{self.round + 1}")
+        .text(f"轮次：{self.round + 1}\n")
         .text(
           f"任务情况：{
             "".join(
@@ -128,12 +137,12 @@ class Game(StateMachine):
                 for i in self.round_states
               ]
             )
-          }"
+          }\n"
         )
-        .text(f"队伍组建尝试次数：{self.build_tries}/5")
-        .text(f"总任务要求人数：{"/".join(map(str, ROUND_SET[len(self.players)]))}")
-        .text(f"保护轮：{ROUND_PROTECT[len(self.players)] or "无"}")
-        .text(f"玩家人数：{len(self.players)}")
-        .text(f"角色组成：{ROLE_SET_NAME[len(self.players)]}")
+        .text(f"队伍组建尝试次数：{self.build_tries}/5\n")
+        .text(f"总任务要求人数：{"/".join(map(str, ROUND_SET[len(self.players)]))}\n")
+        .text(f"保护轮：{ROUND_PROTECT[len(self.players)] or "无"}\n")
+        .text(f"玩家人数：{len(self.players)}\n")
+        .text(f"角色组成：\n{ROLE_SET_NAME[len(self.players)]}")
         .send(self.guild_target)
     )

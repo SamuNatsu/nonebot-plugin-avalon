@@ -9,26 +9,30 @@ from ..state import State
 from nonebot import require
 
 require("nonebot_plugin_alconna")
-from nonebot_plugin_alconna import Target, UniMessage, on_alconna
-
 require("nonebot_plugin_session")
+
+from nonebot_plugin_alconna import Target, UniMessage, on_alconna
 from nonebot_plugin_session import EventSession, SessionLevel
 
 
 # On enter
 async def enter(self: Game, _: StateEnum) -> None:
+  # State-scope matcher handlers
   async def handle_status(session: EventSession) -> None:
+    # Group msg & Is room
     if (
       session.level == SessionLevel.GROUP and
       session.id2 == self.guild_target.id
     ):
       await self.print_status()
 
+  # Create matchers
   self.matchers["status"] = on_alconna(".awl状态", handlers=[handle_status])
 
+  # Initialize
   await (
     UniMessage
-      .text(f"📣阿瓦隆{len(self.players)}人局开始\n\n")
+      .text(f"📣阿瓦隆{len(self.players)}人局开始\n")
       .text(ROLE_SET_NAME[len(self.players)])
       .send(self.guild_target)
   )
@@ -61,17 +65,10 @@ async def enter(self: Game, _: StateEnum) -> None:
   await self.print_player_order()
 
   for pl in self.players.values():
-    await (
-      UniMessage
-        .text(f"💡你的身份是：{ROLE_NAME[pl.role]}")
-        .send(
-          Target(pl.user_id, private=True, self_id=self.guild_target.self_id)
-        )
-    )
-
     if pl.role == RoleEnum.MERLIN:
       await (
         UniMessage
+          .text(f"💡你的身份是：{ROLE_NAME[pl.role]}\n")
           .text("📃邪恶方名单：\n")
           .text(
             "\n".join([f"{self.players[i].name}({i})" for i in merlin_info])
@@ -83,7 +80,8 @@ async def enter(self: Game, _: StateEnum) -> None:
     elif pl.role == RoleEnum.PERCIVAL:
       await (
         UniMessage
-          .text("📃TA们可能是梅林：\n")
+          .text(f"💡你的身份是：{ROLE_NAME[pl.role]}\n")
+          .text("📃梅林在TA们之中：\n")
           .text(
             "\n".join([f"{self.players[i].name}({i})" for i in percival_info])
           )
@@ -94,6 +92,7 @@ async def enter(self: Game, _: StateEnum) -> None:
     elif pl.role in { RoleEnum.MORDRED, RoleEnum.MORGANA, RoleEnum.ASSASSIN, RoleEnum.LACHEY }:
       await (
         UniMessage
+          .text(f"💡你的身份是：{ROLE_NAME[pl.role]}\n")
           .text("📃TA们是你的队友：\n")
           .text(
             "\n".join(
@@ -103,6 +102,14 @@ async def enter(self: Game, _: StateEnum) -> None:
               ]
             )
           )
+          .send(
+            Target(pl.user_id, private=True, self_id=self.guild_target.self_id)
+          )
+      )
+    else:
+      await (
+        UniMessage
+          .text(f"💡你的身份是：{ROLE_NAME[pl.role]}")
           .send(
             Target(pl.user_id, private=True, self_id=self.guild_target.self_id)
           )

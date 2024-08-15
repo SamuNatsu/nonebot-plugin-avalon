@@ -62,14 +62,19 @@ async def handle_new_game(
   user_info: UserInfo = EventUserInfo()
 ) -> None:
   if session.level != SessionLevel.GROUP:
-    return
+    await UniMessage.text("⚠️请在群组中创建新游戏").finish(reply_to=True)
 
   if session.id2 in Game.instances:
-    await UniMessage.text(
-      "本群组有阿瓦隆游戏正在进行，请：\n1.等待游戏结束或\n2.让房主 ["
-    ).at(Game.instances[session.id2].host_id).text(
-      "] 执行命令 [.awl结束] 或\n3.等待游戏 2 小时自动强制结束"
-    ).finish()
+    await (
+      UniMessage
+        .text("⚠️本群组有阿瓦隆游戏正在进行，请：\n")
+        .text("1.等待游戏结束或\n")
+        .text("2.让房主 [")
+        .at(Game.instances[session.id2].host_id)
+        .text("] 执行命令 [.awl结束] 或\n")
+        .text("3.等待游戏 2 小时自动强制结束")
+        .finish(reply_to=True)
+    )
 
   g: Game = Game(session, user_info)
   Game.instances[session.id2] = g
