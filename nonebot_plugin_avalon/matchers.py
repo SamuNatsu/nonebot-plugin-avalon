@@ -1,16 +1,15 @@
-from ..game import Game
-from ..game.role import ROLE_NAME, ROLE_HELP, RoleEnum
+from .game import Game
+from .game.role import ROLE_NAME, ROLE_HELP, RoleEnum
 
 from importlib import metadata
 from nonebot import require
 
 require("nonebot_plugin_alconna")
-from nonebot_plugin_alconna import AlconnaMatcher, UniMessage, on_alconna
-
 require("nonebot_plugin_session")
-from nonebot_plugin_session import EventSession,SessionLevel
-
 require("nonebot_plugin_userinfo")
+
+from nonebot_plugin_alconna import AlconnaMatcher, UniMessage, on_alconna
+from nonebot_plugin_session import EventSession,SessionLevel
 from nonebot_plugin_userinfo import EventUserInfo, UserInfo
 
 
@@ -33,37 +32,33 @@ ROLE_TXT: str = "【阿瓦隆角色帮助】\n" + "\n".join(
 )
 
 # Info
-info: AlconnaMatcher = on_alconna(".awl")
-
-@info.handle()
 async def handle_info() -> None:
   await info.finish(INFO_TXT)
 
-# Intro
-intro: AlconnaMatcher = on_alconna(".awl玩法")
+info: AlconnaMatcher = on_alconna(".awl", handlers=[handle_info])
 
-@intro.handle()
+# Intro
 async def handle_intro() -> None:
   await intro.finish(INTRO_TXT)
 
-# Role
-role: AlconnaMatcher = on_alconna(".awl角色")
+intro: AlconnaMatcher = on_alconna(".awl玩法", handlers=[handle_intro])
 
-@role.handle()
+# Role
 async def handle_role() -> None:
   await role.finish(ROLE_TXT)
 
-# New game
-new_game: AlconnaMatcher = on_alconna(".awl新游戏")
+role: AlconnaMatcher = on_alconna(".awl角色", handlers=[handle_role])
 
-@new_game.handle()
+# New game
 async def handle_new_game(
   session: EventSession,
   user_info: UserInfo = EventUserInfo()
 ) -> None:
+  # Must in group
   if session.level != SessionLevel.GROUP:
     await UniMessage.text("⚠️请在群组中创建新游戏").finish(reply_to=True)
 
+  # Already has instance
   if session.id2 in Game.instances:
     await (
       UniMessage
@@ -76,7 +71,8 @@ async def handle_new_game(
         .finish(reply_to=True)
     )
 
-  g: Game = Game(session, user_info)
-  Game.instances[session.id2] = g
+  # Create instance
+  Game.instances[session.id2] = Game(session, user_info)
+  await Game.instances[session.id2].startup()
 
-  await g.startup()
+new_game: AlconnaMatcher = on_alconna(".awl新游戏", handlers=[handle_new_game])

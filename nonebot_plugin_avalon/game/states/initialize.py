@@ -26,8 +26,22 @@ async def enter(self: Game, _: StateEnum) -> None:
     ):
       await self.print_status()
 
+  async def handle_assassinate(session: EventSession) -> None:
+    # Group msg & Is room & Is player & Is assassin
+    if (
+      session.level == SessionLevel.GROUP and
+      session.id2 == self.guild_target.id and
+      session.id1 in self.players and
+      self.players[session.id1].role == RoleEnum.ASSASSIN
+    ):
+      await self.to_state(StateEnum.ASSASSINATE)
+
   # Create matchers
   self.matchers["status"] = on_alconna(".awl状态", handlers=[handle_status])
+  self.matchers["assassinate"] = on_alconna(
+    ".awl刺杀",
+    handlers=[handle_assassinate]
+  )
 
   # Initialize
   await (
@@ -89,10 +103,28 @@ async def enter(self: Game, _: StateEnum) -> None:
             Target(pl.user_id, private=True, self_id=self.guild_target.self_id)
           )
       )
-    elif pl.role in { RoleEnum.MORDRED, RoleEnum.MORGANA, RoleEnum.ASSASSIN, RoleEnum.LACHEY }:
+    elif pl.role in { RoleEnum.MORDRED, RoleEnum.MORGANA, RoleEnum.LACHEY }:
       await (
         UniMessage
           .text(f"💡你的身份是：{ROLE_NAME[pl.role]}\n")
+          .text("📃TA们是你的队友：\n")
+          .text(
+            "\n".join(
+              [
+                f"{self.players[i].name}{ROLE_NAME[j]}({i})"
+                for i, j in evil_info.items()
+              ]
+            )
+          )
+          .send(
+            Target(pl.user_id, private=True, self_id=self.guild_target.self_id)
+          )
+      )
+    elif pl.role == RoleEnum.ASSASSIN:
+      await (
+        UniMessage
+          .text(f"💡你的身份是：{ROLE_NAME[pl.role]}\n")
+          .text("🗡️在游戏过程中你可以随时发送命令 [.awl刺杀] 进入刺杀阶段\n")
           .text("📃TA们是你的队友：\n")
           .text(
             "\n".join(

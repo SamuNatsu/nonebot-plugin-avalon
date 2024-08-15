@@ -25,7 +25,7 @@ async def enter(self: Game, _: StateEnum) -> None:
       .text("⚠️请玩家私信机器人加入房间，并保持临时会话活动\n")
       .text(f"[.awl加入 {self.key}] 加入房间（仅私信）\n")
       .text("[.awl退出] 退出房间\n")
-      .text("[.awl踢人 <@某人>] 踢出房间（仅房主）\n")
+      .text("[.awl踢人 @某人] 踢出房间（仅房主）\n")
       .text("[.awl开始] 开始游戏（仅房主）\n")
       .text("[.awl玩家] 查看房间玩家列表\n")
       .text("[.awl结束] 强制结束游戏（仅房主）")

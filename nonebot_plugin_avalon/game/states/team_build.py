@@ -39,8 +39,9 @@ async def enter(self: Game, _: StateEnum) -> None:
     UniMessage
       .text(f"📣第{self.round + 1}轮任务开始，请队长开始组队\n")
       .text(f"👑队长：").at(self.leader).text("\n")
+      .text(f"⌛尝试组队次数：{self.build_tries}/5\n")
       .text(f"⚠️本轮任务需要{ROUND_SET[len(self.players)][self.round]}人参与\n")
-      .text("[.awl组队 <@某人 @某人 ...>] 携带某些玩家组建队伍（仅队长）\n")
+      .text("[.awl组队 @某人 @某人 ...] 携带某些玩家组建队伍（仅队长）\n")
       .text("[.awl状态] 查看当前游戏状态\n")
       .text("[.awl玩家] 查看房间玩家列表")
       .send(self.guild_target)

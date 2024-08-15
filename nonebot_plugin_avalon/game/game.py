@@ -11,15 +11,13 @@ from nonebot import require
 from typing import Self
 
 require("nonebot_plugin_alconna")
-from nonebot_plugin_alconna import AlconnaMatcher, Target, UniMessage, on_alconna
-
 require("nonebot_plugin_apscheduler")
-from nonebot_plugin_apscheduler import scheduler
-
 require("nonebot_plugin_session")
-from nonebot_plugin_session import EventSession, SessionLevel
-
 require("nonebot_plugin_userinfo")
+
+from nonebot_plugin_alconna import AlconnaMatcher, Target, UniMessage, on_alconna
+from nonebot_plugin_apscheduler import scheduler
+from nonebot_plugin_session import EventSession, SessionLevel
 from nonebot_plugin_userinfo import UserInfo
 
 
@@ -92,11 +90,15 @@ class Game(StateMachine):
     self.matchers["players"] = on_alconna(".awl玩家", handlers=[handle_players])
     self.matchers["exit"] = on_alconna(".awl结束", handlers=[handle_exit])
 
-  def __del__(self) -> None:
+  def clean_up(self) -> None:
     for i in self.matchers.values():
       i.destroy()
+    self.matchers.clear()
+
     if scheduler.get_job(self.guild_target.id) != None:
       scheduler.remove_job(self.guild_target.id)
+
+    Game.instances.pop(self.guild_target.id)
 
   # Exception handler
   async def exception_handler(self, e: Exception) -> None:
@@ -106,6 +108,7 @@ class Game(StateMachine):
         .text(e)
         .send(self.guild_target)
     )
+    await self.to_state(StateEnum.FORCE_END, reason="插件报错")
 
   # Utils methods
   async def print_players(self) -> None:
@@ -139,10 +142,9 @@ class Game(StateMachine):
             )
           }\n"
         )
-        .text(f"队伍组建尝试次数：{self.build_tries}/5\n")
-        .text(f"总任务要求人数：{"/".join(map(str, ROUND_SET[len(self.players)]))}\n")
+        .text(f"尝试组队次数：{self.build_tries}/5\n")
+        .text(f"各任务要求人数：{"/".join(map(str, ROUND_SET[len(self.players)]))}\n")
         .text(f"保护轮：{ROUND_PROTECT[len(self.players)] or "无"}\n")
-        .text(f"玩家人数：{len(self.players)}\n")
         .text(f"角色组成：\n{ROLE_SET_NAME[len(self.players)]}")
         .send(self.guild_target)
     )

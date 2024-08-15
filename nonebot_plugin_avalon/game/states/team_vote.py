@@ -15,18 +15,20 @@ from nonebot_plugin_session import EventSession, SessionLevel
 async def enter(self: Game, _: StateEnum) -> None:
   # State-scope matcher handlers
   async def handle_agree(session: EventSession) -> None:
-    # Group msg & Is room
+    # Group msg & Is room & Is player
     if (
       session.level == SessionLevel.GROUP and
-      session.id2 == self.guild_target.id
+      session.id2 == self.guild_target.id and
+      session.id1 in self.players
     ):
       await self.on_msg(type="agree", user_id=session.id1)
 
   async def handle_disagree(session: EventSession) -> None:
-    # Group msg & Is room
+    # Group msg & Is room & Is player
     if (
       session.level == SessionLevel.GROUP and
-      session.id2 == self.guild_target.id
+      session.id2 == self.guild_target.id and
+      session.id1 in self.players
     ):
       await self.on_msg(type="disagree", user_id=session.id1)
 
@@ -46,9 +48,6 @@ async def enter(self: Game, _: StateEnum) -> None:
 
 # On message
 async def msg(self: Game, type: str, user_id: str) -> None:
-  if user_id not in self.players:
-    return
-
   if user_id in self.vote:
     await (
       UniMessage
@@ -127,7 +126,7 @@ async def msg(self: Game, type: str, user_id: str) -> None:
         }\n")
         .send(self.guild_target)
     )
-    await self.to_state(StateEnum.TEAM_REJECT)
+    await self.to_state(StateEnum.NEXT_LEADER)
 
 # On exit
 async def exit(self: Game, _: StateEnum) -> None:
