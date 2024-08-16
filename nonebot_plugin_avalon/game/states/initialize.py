@@ -32,7 +32,7 @@ async def enter(self: Game, _: StateEnum) -> None:
       session.level == SessionLevel.GROUP and
       session.id2 == self.guild_target.id and
       session.id1 in self.players and
-      self.players[session.id1].role == RoleEnum.ASSASSIN
+      session.id1 == self.assassin_id
     ):
       await self.to_state(StateEnum.ASSASSINATE, final=False)
 
@@ -121,6 +121,7 @@ async def enter(self: Game, _: StateEnum) -> None:
           )
       )
     elif pl.role == RoleEnum.ASSASSIN:
+      self.assassin_id = pl.user_id
       await (
         UniMessage
           .text(f"💡你的身份是：{ROLE_NAME[pl.role]}\n")

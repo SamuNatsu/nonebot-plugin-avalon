@@ -10,6 +10,5 @@ class StateEnum(Enum):
   TEAM_SET_OUT = auto()
   NEXT_LEADER  = auto()
   ASSASSINATE  = auto()
-  BLUE_WIN     = auto()
-  RED_WIN      = auto()
+  GAME_END     = auto()
   FORCE_END    = auto()

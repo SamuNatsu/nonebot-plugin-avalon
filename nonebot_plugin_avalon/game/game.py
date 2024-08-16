@@ -40,6 +40,7 @@ class Game(StateMachine):
   instances: dict[str, Self] = {}
 
   # Instance variables
+  assassin_id: str
   build_tries: int
   create_time: datetime
   host_id: str
@@ -58,6 +59,7 @@ class Game(StateMachine):
   def __init__(self, session: EventSession, user_info: UserInfo) -> None:
     super().__init__()
 
+    self.assassin_id = ""
     self.build_tries = 1
     self.create_time = datetime.now(UTC)
     self.host_id = session.id1

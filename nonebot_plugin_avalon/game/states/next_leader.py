@@ -15,7 +15,7 @@ async def enter(self: Game, from_state: StateEnum) -> None:
   if from_state == StateEnum.TEAM_VOTE:
     self.build_tries += 1
     if self.build_tries > 5:
-      await self.to_state(StateEnum.RED_WIN, reason="连续5次组队失败")
+      await self.to_state(StateEnum.GAME_END, win=False, reason="连续5次组队失败")
       return
 
     self.leader = self.players_order[
@@ -42,7 +42,7 @@ async def enter(self: Game, from_state: StateEnum) -> None:
     if succs >= 3:
       await self.to_state(StateEnum.ASSASSINATE, final=True)
     elif fails >= 3:
-      await self.to_state(StateEnum.RED_WIN, reason="总计3次任务失败")
+      await self.to_state(StateEnum.GAME_END, win=False, reason="总计3次任务失败")
     else:
       await self.to_state(StateEnum.TEAM_BUILD)
 
