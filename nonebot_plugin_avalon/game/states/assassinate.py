@@ -44,6 +44,7 @@ async def enter(self: Game, _: StateEnum, final: bool) -> None:
         .text(f"🗡️进入最终刺杀阶段，请刺客 [{self.players[self.assassin_id].name}] 发起刺杀\n")
         .text("⚠️若成功刺杀梅林，则邪恶方翻盘获胜，否则正义方获胜\n")
         .text(f"[.awl刺杀 @某人] 指定刺杀对象（仅刺客）")
+        .send(self.guild_target)
     )
   else:
     await (
@@ -51,6 +52,7 @@ async def enter(self: Game, _: StateEnum, final: bool) -> None:
         .text(f"🗡️刺客 [{self.players[self.assassin_id].name}] 发起了刺杀\n")
         .text("⚠️若成功刺杀梅林，则邪恶方直接获胜，否则正义方直接获胜\n")
         .text(f"[.awl刺杀 @某人] 指定刺杀对象（仅刺客）")
+        .send(self.guild_target)
     )
 
 # On message

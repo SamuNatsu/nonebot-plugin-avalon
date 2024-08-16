@@ -37,7 +37,7 @@ async def enter(self: Game, from_state: StateEnum) -> None:
     self.round += 1
 
     succs: int = len(list(filter(lambda x: x == True, self.round_states)))
-    fails: int = self.round - succs - 1
+    fails: int = self.round - succs
 
     if succs >= 3:
       await self.to_state(StateEnum.ASSASSINATE, final=True)

@@ -1,5 +1,3 @@
-import asyncio
-
 from . import StateEnum
 from ..game import Game
 from ..state import State
@@ -22,8 +20,8 @@ async def enter(self: Game, _: StateEnum) -> None:
   await (
     UniMessage
       .text(f"📣本群组阿瓦隆房间已由房主 [{self.players[self.host_id].name}] 开启\n")
-      .text("⚠️请玩家私信机器人加入房间，并保持临时会话活动\n")
-      .text(f"[.awl加入 {self.key}] 加入房间（仅私信）\n")
+      .text("⚠️请玩家添加机器人好友以保证游戏正常进行\n")
+      .text("[.awl加入] 加入房间\n")
       .text("[.awl退出] 退出房间\n")
       .text("[.awl踢人 @某人] 踢出房间（仅房主）\n")
       .text("[.awl开始] 开始游戏（仅房主）\n")
@@ -35,13 +33,12 @@ async def enter(self: Game, _: StateEnum) -> None:
   # State-scope matcher handlers
   async def handle_join(
     session: EventSession,
-    user_info: UserInfo = EventUserInfo(),
-    result: Arparma = AlconnaMatches()
+    user_info: UserInfo = EventUserInfo()
   ) -> None:
-    # Private msg & Key matched
+    # Group msg & Is room
     if (
-      session.level == SessionLevel.PRIVATE and
-      result.main_args["key"] == self.key
+      session.level == SessionLevel.GROUP and
+      session.id2 == self.guild_target.id
     ):
       await self.on_msg(type="join", user_info=user_info)
 
@@ -87,10 +84,7 @@ async def enter(self: Game, _: StateEnum) -> None:
       await self.on_msg(type="start", user_info=user_info)
 
   # Create matchers
-  self.matchers["join"] = on_alconna(
-    Alconna(".awl加入", Args["key", str]),
-    handlers=[handle_join]
-  )
+  self.matchers["join"] = on_alconna(".awl加入", handlers=[handle_join])
   self.matchers["leave"] = on_alconna(".awl退出", handlers=[handle_leave])
   self.matchers["kick"] = on_alconna(
     Alconna(".awl踢人", Args["target", At]),
@@ -107,12 +101,11 @@ async def msg(self: Game, type: str, user_info: UserInfo) -> None:
       await UniMessage.text("⚠️你已经在该房间中了").send(reply_to=True)
     else:
       self.players[pl.user_id] = pl
-      await asyncio.gather(
-        UniMessage.text("💡成功加入房间").send(reply_to=True),
+      await (
         UniMessage
-          .text("📣玩家 [").at(pl.user_id).text("] 加入了房间\n")
+          .text(f"📣玩家 [{pl.name}] 加入了房间\n")
           .text(f"📊房间人数：{len(self.players)}人")
-          .send(self.guild_target)
+          .send(reply_to=True)
       )
 
   elif type == "leave":
@@ -126,7 +119,7 @@ async def msg(self: Game, type: str, user_info: UserInfo) -> None:
       else:
         await (
           UniMessage
-            .text(f"📣玩家 [{self.players[pl.user_id].name}] 离开了房间\n")
+            .text(f"📣玩家 [{pl.name}] 离开了房间\n")
             .text(f"📊房间人数：{len(self.players)}人")
             .send(reply_to=True)
         )
