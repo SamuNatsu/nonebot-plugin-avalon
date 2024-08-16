@@ -24,7 +24,7 @@ async def enter(self: Game, _: StateEnum) -> None:
       session.level == SessionLevel.GROUP and
       session.id2 == self.guild_target.id
     ):
-      await self.print_status()
+      await self.reply_status()
 
   async def handle_assassinate(session: EventSession) -> None:
     # Group msg & Is room & Is player & Is assassin
@@ -34,7 +34,7 @@ async def enter(self: Game, _: StateEnum) -> None:
       session.id1 in self.players and
       self.players[session.id1].role == RoleEnum.ASSASSIN
     ):
-      await self.to_state(StateEnum.ASSASSINATE)
+      await self.to_state(StateEnum.ASSASSINATE, final=False)
 
   # Create matchers
   self.matchers["status"] = on_alconna(".awl状态", handlers=[handle_status])

@@ -108,10 +108,10 @@ async def msg(self: Game, type: str, user_info: UserInfo) -> None:
     else:
       self.players[pl.user_id] = pl
       await asyncio.gather(
-        UniMessage.text("🆗成功加入房间").send(reply_to=True),
+        UniMessage.text("💡成功加入房间").send(reply_to=True),
         UniMessage
           .text("📣玩家 [").at(pl.user_id).text("] 加入了房间\n")
-          .text(f"💡房间人数：{len(self.players)}人")
+          .text(f"📊房间人数：{len(self.players)}人")
           .send(self.guild_target)
       )
 
@@ -127,7 +127,7 @@ async def msg(self: Game, type: str, user_info: UserInfo) -> None:
         await (
           UniMessage
             .text(f"📣玩家 [{self.players[pl.user_id].name}] 离开了房间\n")
-            .text(f"💡房间人数：{len(self.players)}人")
+            .text(f"📊房间人数：{len(self.players)}人")
             .send(reply_to=True)
         )
         self.players.pop(pl.user_id)
@@ -151,7 +151,7 @@ async def msg(self: Game, type: str, user_info: UserInfo) -> None:
         await (
           UniMessage
             .text("📣玩家 [").at(pl.user_id).text("] 被踢出房间\n")
-            .text(f"💡房间人数：{len(self.players)}人")
+            .text(f"📊房间人数：{len(self.players)}人")
             .send(reply_to=True)
         )
     else:
@@ -166,7 +166,7 @@ async def msg(self: Game, type: str, user_info: UserInfo) -> None:
       await (
         UniMessage
           .text("⚠️游戏人数不满足5~10人，不能开始游戏\n")
-          .text(f"💡房间人数：{len(self.players)}人")
+          .text(f"📊房间人数：{len(self.players)}人")
           .send(reply_to=True)
       )
     else:
@@ -174,9 +174,7 @@ async def msg(self: Game, type: str, user_info: UserInfo) -> None:
 
 # On exit
 async def exit(self: Game, _: StateEnum) -> None:
-  for i in ["join", "leave", "kick", "start"]:
-    self.matchers[i].destroy()
-    self.matchers.pop(i)
+  self.remove_matchers("join", "leave", "kick", "start")
 
 # Register state
 Game.register_state(

@@ -13,6 +13,8 @@ from nonebot_plugin_session import EventSession, SessionLevel
 
 # On enter
 async def enter(self: Game, _: StateEnum) -> None:
+  self.vote = {}
+
   # State-scope matcher handlers
   async def handle_agree(session: EventSession) -> None:
     # Group msg & Is room & Is player
@@ -104,6 +106,7 @@ async def msg(self: Game, type: str, user_id: str) -> None:
         .send(self.guild_target)
     )
     await self.to_state(StateEnum.TEAM_SET_OUT)
+
   if disagree / len(self.players) > 0.5:
     await (
       UniMessage
@@ -130,9 +133,7 @@ async def msg(self: Game, type: str, user_id: str) -> None:
 
 # On exit
 async def exit(self: Game, _: StateEnum) -> None:
-  for i in ["agree", "disagree"]:
-    self.matchers[i].destroy()
-    self.matchers.pop(i)
+  self.remove_matchers("agree", "disagree")
 
 # Register state
 Game.register_state(

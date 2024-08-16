@@ -61,7 +61,7 @@ class Game(StateMachine):
     self.build_tries = 1
     self.create_time = datetime.now(UTC)
     self.host_id = session.id1
-    self.key = secrets.token_hex(4)
+    self.key = secrets.token_hex(3)
     self.leader = ""
     self.guild_target = Target(session.id2, self_id=session.bot_id)
     self.matchers = {}
@@ -77,7 +77,10 @@ class Game(StateMachine):
         session.level == SessionLevel.GROUP and
         session.id2 == self.guild_target.id
       ):
-        await self.print_players()
+        if self.is_state(StateEnum.WAIT_START):
+          await self.print_players()
+        else:
+          await self.print_player_order()
 
     async def handle_exit(session: EventSession) -> None:
       if (
@@ -111,8 +114,14 @@ class Game(StateMachine):
     await self.to_state(StateEnum.FORCE_END, reason="插件报错")
 
   # Utils methods
+  def remove_matchers(self, *args) -> None:
+    for i in args:
+      if i in self.matchers:
+        self.matchers[i].destroy()
+        self.matchers.pop(i)
+
   async def print_players(self) -> None:
-    msg: UniMessage = UniMessage.text(f"🎮当前玩家列表：{len(self.players)}人")
+    msg: UniMessage = UniMessage.text(f"🎮玩家列表：{len(self.players)}人")
     for pl in self.players.values():
       msg.text(f"\n{pl.name}")
     await msg.send(self.guild_target)
@@ -120,20 +129,19 @@ class Game(StateMachine):
   async def print_player_order(self) -> None:
     msg: UniMessage = (
       UniMessage
-        .text(f"👑当前队长：{self.players[self.leader].name}\n")
-        .text("▶️当前玩家顺位：")
+        .text(f"👑队长：{self.players[self.leader].name}\n")
+        .text("🔃玩家顺位：")
     )
     for plid in self.players_order:
       msg.text(f"\n{self.players[plid].name}")
     await msg.send(self.guild_target)
 
-  async def print_status(self) -> None:
+  async def reply_status(self) -> None:
     await (
       UniMessage
-        .text("🚀当前游戏状态：\n")
-        .text(f"轮次：{self.round + 1}\n")
+        .text(f"🕒轮次：{self.round + 1}\n")
         .text(
-          f"任务情况：{
+          f"❓任务情况：{
             "".join(
               [
                 "⬜" if i == None else "🟩" if i else "🟥"
@@ -142,9 +150,9 @@ class Game(StateMachine):
             )
           }\n"
         )
-        .text(f"尝试组队次数：{self.build_tries}/5\n")
-        .text(f"各任务要求人数：{"/".join(map(str, ROUND_SET[len(self.players)]))}\n")
-        .text(f"保护轮：{ROUND_PROTECT[len(self.players)] or "无"}\n")
-        .text(f"角色组成：\n{ROLE_SET_NAME[len(self.players)]}")
-        .send(self.guild_target)
+        .text(f"⌛尝试组队次数：{self.build_tries}/5\n")
+        .text(f"📊各任务要求人数：{"/".join(map(str, ROUND_SET[len(self.players)]))}\n")
+        .text(f"🛡️保护轮：{ROUND_PROTECT[len(self.players)] or "无"}\n")
+        .text(f"⚙️角色组成：\n{ROLE_SET_NAME[len(self.players)]}")
+        .send(reply_to=True)
     )

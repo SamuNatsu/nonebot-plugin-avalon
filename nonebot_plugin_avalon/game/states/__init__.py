@@ -8,7 +8,6 @@ class StateEnum(Enum):
   TEAM_BUILD   = auto()
   TEAM_VOTE    = auto()
   TEAM_SET_OUT = auto()
-  TEAM_REJECT  = auto()
   NEXT_LEADER  = auto()
   ASSASSINATE  = auto()
   BLUE_WIN     = auto()

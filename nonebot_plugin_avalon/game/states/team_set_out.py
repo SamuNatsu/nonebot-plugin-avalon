@@ -51,15 +51,15 @@ async def enter(self: Game, _: StateEnum) -> None:
 
   # Create matchers
   self.matchers["success"] = on_alconna(
-    Alconna(".awl成功", Args("key", str)),
+    Alconna(".awl成功", Args["key", str]),
     handlers=[handle_success]
   )
   self.matchers["fail"] = on_alconna(
-    Alconna(".awl失败", Args("key", str)),
+    Alconna(".awl失败", Args["key", str]),
     handlers=[handle_fail]
   )
 
-  await (
+  msg: UniMessage = (
     UniMessage
       .text(f"📣请队伍队员在机器人私信中秘密表决任务成功与否\n")
       .text(
@@ -70,9 +70,16 @@ async def enter(self: Game, _: StateEnum) -> None:
         )
         else ""
       )
-      .text(f"[.awl成功 {self.key}] 任务成功（仅私信）\n")
+      .text("📃队员名单：")
+  )
+  for i in self.team:
+    msg.at(i)
+
+  await (
+    msg
+      .text(f"\n[.awl成功 {self.key}] 任务成功（仅私信）\n")
       .text(f"[.awl失败 {self.key}] 任务失败（仅私信）")
-      .send(reply_to=True)
+      .send(self.guild_target)
     )
 
 # On message
@@ -94,7 +101,7 @@ async def msg(self: Game, type: str, user_id: str) -> None:
     await asyncio.gather(
       UniMessage.text("✅你表决了任务成功").send(reply_to=True),
       UniMessage
-        .text(f"📣[{self.players[user_id].name}] 完成了秘密表决")
+        .text(f"📣[{self.players[user_id].name}] 完成了秘密表决\n")
         .text(f"⌛进度：{len(self.vote)}/{len(self.team)}")
         .send(self.guild_target)
     )
@@ -130,24 +137,24 @@ async def msg(self: Game, type: str, user_id: str) -> None:
       self.round_states[self.round] = False
       await (
         UniMessage
-          .text("❎任务失败了")
+          .text("❎任务失败了\n")
           .text(f"票形：{"🟩" * succs}{"🟥" * fails}")
+          .send(self.guild_target)
       )
     else:
       self.round_states[self.round] = True
       await (
         UniMessage
-          .text("✅任务成功了")
+          .text("✅任务成功了\n")
           .text(f"票形：{"🟩" * succs}{"🟥" * fails}")
+          .send(self.guild_target)
       )
 
     await self.to_state(StateEnum.NEXT_LEADER)
 
 # On exit
 async def exit(self: Game, _: StateEnum) -> None:
-  for i in ["success", "fail"]:
-    self.matchers[i].destroy()
-    self.matchers.pop(i)
+  self.remove_matchers("success", "fail")
 
 # Register state
 Game.register_state(

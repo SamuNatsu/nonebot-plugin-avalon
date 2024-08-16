@@ -65,8 +65,7 @@ async def msg(self: Game, users: list[str]) -> None:
 
 # On exit
 async def exit(self: Game, _: StateEnum) -> None:
-  self.matchers["build"].destroy()
-  self.matchers.pop("build")
+  self.remove_matchers("build")
 
 # Register state
 Game.register_state(

@@ -1,3 +1,5 @@
+import traceback
+
 from .state import State, StateId
 
 from abc import abstractmethod
@@ -42,8 +44,9 @@ class StateMachine:
       try:
         await current_state.enter(self, current_state.id, **kwargs)
       except Exception as e:
-        logger.error(e)
+        logger.error(traceback.format_exc())
         await self.exception_handler(e)
+        return
 
   def get_current_state(self) -> State:
     return self._states[self._current_state]
@@ -61,8 +64,9 @@ class StateMachine:
       try:
         await current_state.exit(self, id)
       except Exception as e:
-        logger.error(e)
+        logger.error(traceback.format_exc())
         await self.exception_handler(e)
+        return
 
     last_state: StateId = self._current_state
     self._current_state = id
@@ -72,7 +76,7 @@ class StateMachine:
       try:
         await current_state.enter(self, last_state, **kwargs)
       except Exception as e:
-        logger.error(e)
+        logger.error(traceback.format_exc())
         await self.exception_handler(e)
 
   async def on_msg(self, **kwargs) -> None:
@@ -85,5 +89,6 @@ class StateMachine:
       try:
         await current_state.msg(self, **kwargs)
       except Exception as e:
-        logger.error(e)
+        logger.error(traceback.format_exc())
         await self.exception_handler(e)
+        return
