@@ -1,12 +1,14 @@
 from dataclasses import dataclass
-from typing import Any, Awaitable, Callable, Concatenate, TypeAlias
+from typing import Any, Awaitable, Callable, Concatenate, ParamSpec, TypeAlias
 
+
+P = ParamSpec('P')
 
 StateId: TypeAlias      = Any
 EnterHandler: TypeAlias = Callable[
-  Concatenate[Any, StateId, ...], Awaitable[None]
+  Concatenate[Any, StateId, P], Awaitable[None]
 ]
-MsgHandler: TypeAlias   = Callable[Concatenate[Any, ...], Awaitable[None]]
+MsgHandler: TypeAlias   = Callable[Concatenate[Any, P], Awaitable[None]]
 ExitHandler: TypeAlias  = Callable[[Any, StateId], Awaitable[None]]
 
 

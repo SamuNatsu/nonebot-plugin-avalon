@@ -6,9 +6,9 @@ from .state_machine import StateMachine
 from .states import StateEnum
 
 from dataclasses import dataclass
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from nonebot import require
-from typing import Self
+from typing import Any
 
 require("nonebot_plugin_alconna")
 require("nonebot_plugin_apscheduler")
@@ -37,7 +37,7 @@ class Game(StateMachine):
       )
 
   # Class variables
-  instances: dict[str, Self] = {}
+  instances: dict[str, Any] = {}
 
   # Instance variables
   assassin_id: str
@@ -61,7 +61,7 @@ class Game(StateMachine):
 
     self.assassin_id = ""
     self.build_tries = 1
-    self.create_time = datetime.now(UTC)
+    self.create_time = datetime.now(timezone.utc)
     self.host_id = session.id1
     self.key = secrets.token_hex(3)
     self.leader = ""
@@ -139,22 +139,20 @@ class Game(StateMachine):
     await msg.send(self.guild_target)
 
   async def reply_status(self) -> None:
+    task_status: str = "".join(
+      [
+        "⬜" if i == None else "🟩" if i else "🟥"
+        for i in self.round_states
+      ]
+    )
+
     await (
       UniMessage
         .text(f"🕒轮次：{self.round + 1}\n")
-        .text(
-          f"❓任务情况：{
-            "".join(
-              [
-                "⬜" if i == None else "🟩" if i else "🟥"
-                for i in self.round_states
-              ]
-            )
-          }\n"
-        )
+        .text(f"❓任务情况：{task_status}\n")
         .text(f"⌛尝试组队次数：{self.build_tries}/5\n")
-        .text(f"📊各任务要求人数：{"/".join(map(str, ROUND_SET[len(self.players)]))}\n")
-        .text(f"🛡️保护轮：{ROUND_PROTECT[len(self.players)] or "无"}\n")
+        .text(f"📊各任务要求人数：{'/'.join(map(str, ROUND_SET[len(self.players)]))}\n")
+        .text(f"🛡️保护轮：{ROUND_PROTECT[len(self.players)] or '无'}\n")
         .text(f"⚙️角色组成：\n{ROLE_SET_NAME[len(self.players)]}")
         .send(reply_to=True)
     )

@@ -53,7 +53,7 @@ async def msg(self: Game, type: str, user_id: str) -> None:
   if user_id in self.vote:
     await (
       UniMessage
-        .text(f"⚠️你已经对该队伍投了 {"[✅同意票]" if self.vote[user_id] else "[❎反对票]"}]")
+        .text(f"⚠️你已经对该队伍投了 {'[✅同意票]' if self.vote[user_id] else '[❎反对票]'}]")
         .send(reply_to=True)
     )
     return
@@ -69,7 +69,7 @@ async def msg(self: Game, type: str, user_id: str) -> None:
     await (
       UniMessage
         .text(f"📣[{self.players[user_id].name}] 投了 [✅同意票]\n")
-        .text(f"当前票型：{"🟩" * agree}{"⬜" * none}{"🟥" * disagree}")
+        .text(f"当前票型：{'🟩' * agree}{'⬜' * none}{'🟥' * disagree}")
         .send(reply_to=True)
     )
   else:
@@ -78,31 +78,30 @@ async def msg(self: Game, type: str, user_id: str) -> None:
     await (
       UniMessage
         .text(f"📣[{self.players[user_id].name}] 投了 [❎反对票]\n")
-        .text(f"当前票型：{"🟩" * agree}{"⬜" * none}{"🟥" * disagree}")
+        .text(f"当前票型：{'🟩' * agree}{'⬜' * none}{'🟥' * disagree}")
         .send(reply_to=True)
     )
 
   agree, none, disagree = vote_count()
+  agree_txt: str = "\n".join(
+    map(
+      lambda x: self.players[x[0]].name,
+      filter(lambda x: x[1], self.vote.items())
+    )
+  )
+  disagree_txt: str = "\n".join(
+    map(
+      lambda x: self.players[x[0]].name,
+      filter(lambda x: not x[1], self.vote.items())
+    )
+  )
+
   if agree / len(self.players) > 0.5:
     await (
       UniMessage
         .text(f"✅队伍通过了投票\n")
-        .text(f"🟩TA们投了同意：\n{
-          "\n".join(
-            map(
-              lambda x: self.players[x[0]].name,
-              filter(lambda x: x[1], self.vote.items())
-            )
-          )
-        }\n")
-        .text(f"🟥TA们投了反对：\n{
-          "\n".join(
-            map(
-              lambda x: self.players[x[0]].name,
-              filter(lambda x: not x[1], self.vote.items())
-            )
-          )
-        }\n")
+        .text(f"🟩TA们投了同意：\n{agree_txt}\n")
+        .text(f"🟥TA们投了反对：\n{disagree_txt}\n")
         .send(self.guild_target)
     )
     await self.to_state(StateEnum.TEAM_SET_OUT)
@@ -111,22 +110,8 @@ async def msg(self: Game, type: str, user_id: str) -> None:
     await (
       UniMessage
         .text(f"❎队伍未通过投票\n")
-        .text(f"🟩TA们投了同意：\n{
-          "\n".join(
-            map(
-              lambda x: self.players[x[0]].name,
-              filter(lambda x: x[1], self.vote.items())
-            )
-          )
-        }\n")
-        .text(f"🟥TA们投了反对：\n{
-          "\n".join(
-            map(
-              lambda x: self.players[x[0]].name,
-              filter(lambda x: not x[1], self.vote.items())
-            )
-          )
-        }\n")
+        .text(f"🟩TA们投了同意：\n{agree_txt}\n")
+        .text(f"🟥TA们投了反对：\n{disagree_txt}\n")
         .send(self.guild_target)
     )
     await self.to_state(StateEnum.NEXT_LEADER)

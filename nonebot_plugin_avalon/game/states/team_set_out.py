@@ -91,7 +91,7 @@ async def msg(self: Game, type: str, user_id: str) -> None:
   if user_id in self.vote:
     await (
       UniMessage
-        .text(f"⚠️你已经表决了 {"[✅任务成功]" if self.vote[user_id] else "[❎任务失败]"}")
+        .text(f"⚠️你已经表决了 {'[✅任务成功]' if self.vote[user_id] else '[❎任务失败]'}")
         .send(reply_to=True)
     )
     return
@@ -138,7 +138,7 @@ async def msg(self: Game, type: str, user_id: str) -> None:
       await (
         UniMessage
           .text("❎任务失败了\n")
-          .text(f"票形：{"🟩" * succs}{"🟥" * fails}")
+          .text(f"票形：{'🟩' * succs}{'🟥' * fails}")
           .send(self.guild_target)
       )
     else:
@@ -146,7 +146,7 @@ async def msg(self: Game, type: str, user_id: str) -> None:
       await (
         UniMessage
           .text("✅任务成功了\n")
-          .text(f"票形：{"🟩" * succs}{"🟥" * fails}")
+          .text(f"票形：{'🟩' * succs}{'🟥' * fails}")
           .send(self.guild_target)
       )
 
