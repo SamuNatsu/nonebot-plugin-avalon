@@ -10,7 +10,7 @@
 
 _✨ 阿瓦隆游戏插件 ✨_
 
-<a href="./LICENSE"><img src="https://img.shields.io/github/license/owner/nonebot-plugin-avalon.svg" alt="license"></a>
+<a href="./LICENSE"><img src="https://img.shields.io/github/license/SamuNatsu/nonebot-plugin-avalon.svg" alt="license"></a>
 <a href="https://pypi.python.org/pypi/nonebot-plugin-avalon"><img src="https://img.shields.io/pypi/v/nonebot-plugin-avalon.svg" alt="pypi"></a>
 <img src="https://img.shields.io/badge/python-3.10+-blue.svg" alt="python">
 
